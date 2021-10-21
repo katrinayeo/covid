@@ -57,7 +57,7 @@ Actual_date_interval <- c("2020/01/01","2021/05/31")
 Forecast_date_interval <- c("2021/06/01","2021/10/31")
 AD<-fulldate<-seq(as.Date(Actual_date_interval[1]),as.Date(Actual_date_interval[2]), frequency)  # Input range for actual date
 FD<-seq(as.Date(Forecast_date_interval[1]),as.Date(Forecast_date_interval[2]), frequency)  # Input range forecasting date
-N_forecasting_days<-nrow(data.frame(FD))  # Ccalculate number of days that you want to forecasting
+N_forecasting_days<-nrow(data.frame(FD))  # Calculate number of days that you want to forecasting
 validation_dates<-tail(AD,validation_data_days) # Select validation_dates
 validation_data_by_name<-weekdays(validation_dates) # Names of validation dates
 forecasting_data_by_name<-weekdays(FD)  # Names of Forecasting dates
