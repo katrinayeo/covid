@@ -1,7 +1,6 @@
 library(forecast)
 library(ggplot2)
 library("readxl")
-install.packages("moments", repos="https://cran.r-project.org")
 library(moments)
 library(forecast)
 require(forecast)  
@@ -9,9 +8,8 @@ require(tseries)
 require(markovchain)
 require(data.table)
 library(pander)
-install.packages("MTS")
 library("MTS")
-
+library(ascii)
 #Loading Daily New Cases Data
 DNC <- read_excel("formated_data.xlsx", sheet = "Daily New Cases")
 SGDNC<-DNC$Singapore
@@ -42,20 +40,56 @@ SGESI<-ESI$Singapore
 UKESI<-ESI$`United Kingdom`
 USESI<-ESI$`United States`
 
-
 #Finding Appropriate model for Singapore
 SGdata = cbind(SGDNC, SGGRI, SGCHI, SGESI)
 diff_SGdata = diff(SGdata)
 dim(diff_SGdata)
 
-MTSplot(diff_SGdata)
-ccm(diff_SGdata)
-m0=VARorder(diff_SGdata)
+# Data Preprocessing
+validation_data_days = 50
+#processing on data (input data)
+rows <- NROW(diff_SGdata) # calculate number of rows in time series (number of days)
+training_data<-diff_SGdata[1:(rows-validation_data_days),] # Training data
+testing_data<-diff_SGdata[(rows-validation_data_days+1):rows,] #Testing data
+frequency<-"days"
+y_lab <- "Daily Covid 19 Infection cases in Singapore"   # Input name of data
+Actual_date_interval <- c("2020/01/01","2021/05/31")
+Forecast_date_interval <- c("2021/06/01","2021/10/31")
+AD<-fulldate<-seq(as.Date(Actual_date_interval[1]),as.Date(Actual_date_interval[2]), frequency)  # Input range for actual date
+FD<-seq(as.Date(Forecast_date_interval[1]),as.Date(Forecast_date_interval[2]), frequency)  # Input range forecasting date
+N_forecasting_days<-nrow(data.frame(FD))  # Ccalculate number of days that you want to forecasting
+validation_dates<-tail(AD,validation_data_days) # Select validation_dates
+validation_data_by_name<-weekdays(validation_dates) # Names of validation dates
+forecasting_data_by_name<-weekdays(FD)  # Names of Forecasting dates
+
+MTSplot(training_data)
+ccm(training_data)
+m0=VARorder(training_data)
 m0$Mstat
 names(m0)
-m1=VAR(diff_SGdata,13) 
+m1=VAR(training_data,3)
 m2=refVAR(m1,thres=1.96)
 MTSdiag(m1,adj=12)
-VARpred(m1,8)
-colMeans(diff_SGdata) 
-sqrt(apply(diff_SGdata,2,var))
+
+validation_forecast<-VARpred(m1,validation_data_days)
+forecasting_VAR <- VARpred(m1, forecasting_days+validation_data_days)
+MAPE_Per_Day<-round(  abs(((testing_data-validation_forecast$pred)/testing_data)*100)  ,3)
+paste ("MAPE % For ",validation_data_days,frequency,"by using VAR Model for  ==> ",y_lab, sep=" ")
+MAPE_Mean_All<-paste(round(mean(MAPE_Per_Day),3),"% MAPE ",validation_data_days,frequency,y_lab,sep=" ")
+MAPE_Mean_All_VAR<-round(mean(MAPE_Per_Day),3)
+MAPE_VAR<-paste(round(MAPE_Per_Day,3),"%")
+MAPE_VAR_Model<-paste(MAPE_Per_Day ,"%")
+paste (" MAPE that's Error of Forecasting for ",validation_data_days," days in VAR Model for  ==> ",y_lab, sep=" ")
+paste(MAPE_Mean_All,"%")
+paste ("MAPE that's Error of Forecasting day by day for ",validation_data_days," days in VAR Model for  ==> ",y_lab, sep=" ")
+
+print(ascii(data.frame(date_VAR=validation_dates,validation_data_by_name,actual_data=testing_data[1],forecasting_VAR=validation_forecast$pred[1],MAPE_VAR_Model)), type = "rest")
+print(ascii(data.frame(FD,forecating_date=forecasting_data_by_name,forecasting_by_VAR=tail(forecasting_VAR$pred[1],N_forecasting_days))), type = "rest")
+plot(forecasting_VAR$pred[,1],xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab)
+x1_test <- ts(testing_data, start =(rows-validation_data_days+1) )
+lines(x1_test, col='red',lwd=2)
+#graph1<-autoplot(forecasting_VAR,xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab)
+#graph1
+
+colMeans(training_data) 
+sqrt(apply(training_data,2,var))
