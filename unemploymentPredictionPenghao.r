@@ -14,6 +14,11 @@ library(pander)
 library(tseries)
 library(forecast)   
 require(tseries) 
+library(forecast)
+library(ggplot2)
+library("readxl")
+library(moments)
+library("MTS")
 
 # ==============
 # Loading data
@@ -38,22 +43,29 @@ USMUR_Validate <- USMURAll[18:22]
 UKMUR_Validate <- UKMURAll[18:22] 
 
 #Loading Government Response Index Data
-GRI <- read_excel("formated_data.xlsx", sheet = "Government Response Index")
+GRI <- read_excel("formated_data.xlsx", sheet = "GRI Monthly")
 SGGRI<-GRI$Singapore
 UKGRI<-GRI$`United Kingdom`
 USGRI<-GRI$`United States`
 
 #Loading Containment Health Index Data
-CHI <- read_excel("formated_data.xlsx", sheet = "Containment Health Index")
+CHI <- read_excel("formated_data.xlsx", sheet = "CHI Monthly")
 SGCHI<-CHI$Singapore
 UKCHI<-CHI$`United Kingdom`
 USCHI<-CHI$`United States`
 
 #Loading Economic Support Index Data
-ESI <- read_excel("formated_data.xlsx", sheet = "Economic Support Index")
+ESI <- read_excel("formated_data.xlsx", sheet = "ESI Monthly")
 SGESI<-ESI$Singapore
 UKESI<-ESI$`United Kingdom`
 USESI<-ESI$`United States`
+
+#Loading Stringent Index Data
+SI <- read_excel("formated_data.xlsx", sheet = "SI Monthly")
+SGSI<-SI$Singapore
+UKSI<-SI$`United Kingdom`
+USSI<-SI$`United States`
+
 
 # ==============
 # Single variate ARIMA
@@ -121,6 +133,28 @@ plot(forecast_raw_US,xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=
 # Multivariate ARIMA
 # ==============
 
+# On UK
+
+# First remove 'na'
+UKGRI <- UKGRI[UKGRI!=-1]
+UKCHI <- UKCHI[UKCHI!=-1]
+UKESI <- UKESI[UKESI!=-1]
+UKSI  <- UKSI[UKSI!=-1]
+
+# Trim the lists to the same length
+length_of_period = min(length(UKGRI), length(UKCHI), length(UKESI), length(UKSI), length(UKMUR))
+print( paste('Minimum length of vector with all elements eligible is', length_of_period) )
+tUKGRI <- UKGRI[ (length(UKGRI) - length_of_period + 1) : length(UKGRI)]
+tUKCHI <- UKCHI[ (length(UKCHI) - length_of_period + 1) : length(UKCHI)]
+tUKESI <- UKESI[ (length(UKESI) - length_of_period + 1) : length(UKESI)]
+tUKSI <- UKSI[ (length(UKSI) - length_of_period + 1) : length(UKSI)]
+tUKMUR <- UKMUR[ (length(UKMUR) - length_of_period + 1) : length(UKMUR)]
+
+# Fit the VAR model
+training_data = cbind(tUKMUR, tUKSI, tUKESI, tUKCHI, tUKGRI)
+m1=VAR(training_data)
+
+# Trim down to the same length
 
 # ==============
 # Cross country single variate ARIMA
