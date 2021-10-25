@@ -390,14 +390,43 @@ sqrt(apply(training_data,2,var))
 
 #VECM Model
 SGdata = cbind(SGDNC, SGGRI, SGCHI, SGESI)
-SGData.VAR.IC <- VARselect(SGData, type= const)
+SGdata.VAR <- VARselect(SGdata) #determining number of lags to be included in cointegration test and VCEM model
+nlags <- SGdata.VAR$selection["SC(n)"]
+nlags
+
+#Perform cointegration test
+SGdata.CA <- ca.jo(SGdata, ecdet="const", type="trace", K=nlags, spec="transitory")
+summary(SGdata.CA)
 
 
 
+#Convert from VCEM to VAR model
+SGdata.VAR_convert <- vec2var(SGdata.CA, r=1)
 
+#Forecasting
+validation_forecast<-predict(SGdata.VAR_convert, validation_data_days)
+forecasting_VECM <- predict(SGdata.VAR_convert, N_forecasting_days+validation_data_days)
+MSE_Per_Day<-round((testing_data[, 1]-validation_forecast$pred[, 1])^2, 3)
+paste ("MSE for ",validation_data_days,frequency,"by using VECM Model for  ==> ",y_lab, sep=" ")
+MSE_Mean_All.VECM<-paste(round(mean(MSE_Per_Day),3)," MSE ",validation_data_days,frequency,y_lab,sep=" ")
+MSE_Mean_All.VECM<-round(mean(MSE_Per_Day),3)
+MSE_VECM<-paste(round(MSE_Per_Day,3))
+MSE_VECM_Model<-paste(MSE_Per_Day )
+paste ("MSE Error of Forecasting for ",validation_data_days," days in VECM Model for  ==> ",y_lab, sep=" ")
+paste(MSE_Mean_All,"%")
+paste ("MSE Error of Forecasting day by day for ",validation_data_days," days in VECM Model for  ==> ",y_lab, sep=" ")
 
-# Summary Table for MSE for all models
-best_recommended_model <- min(MSE_Mean_All_NNAR, MSE_Mean_All.bats_Model, MSE_Mean_All.TBATS_Model, MSE_Mean_All.Holt_Model, MSE_Mean_All.ARIMA_Model, MSE_Mean_All.VAR)
+print(ascii(data.frame(date_VAR=validation_dates,validation_data_by_name,actual_data=testing_data[, 1],forecasting_VAR=validation_forecast$pred[, 1], MSE_VAR_Model)), type = "rest")
+print(ascii(data.frame(FD, forecating_date=forecasting_data_by_name, forecasting_by_VAR=tail(forecasting_VAR$pred[, 1], N_forecasting_days))), type = "rest")
+plot(forecasting_VECM$pred[,1],xlab = paste ("Time in", frequency, y_lab, sep=" "), ylab=y_lab)
+x1_test <- ts(testing_data, start = testing_data_start_index )
+lines(x1_test, col='red',lwd=1)
+graph6<-autoplot(forecasting_VECM, xlab = paste ("Time in", frequency, y_lab, sep=" "), ylab=y_lab)
+graph6
+MSE_Mean_All.VECM
+
+1# Summary Table for MSE for all models
+best_recommended_model <- min(MSE_Mean_All_NNAR, MSE_Mean_All.bats_Model, MSE_Mean_All.TBATS_Model, MSE_Mean_All.Holt_Model, MSE_Mean_All.ARIMA_Model, MSE_Mean_All.VAR, MSE_Mean_All.VECM)
 paste("Choosing the best model based on MSE of forecasts by using NNAR, BATS, TBATS, Holt's Linear Model, ARIMA and VAR for ", y_lab, sep=" ")
 best_recommended_model
 x1<-if(best_recommended_model >= MSE_Mean_All.bats_Model) {paste("BATS Model")}
@@ -406,6 +435,7 @@ x3<-if(best_recommended_model >= MSE_Mean_All.Holt_Model) {paste("Holt Model")}
 x4<-if(best_recommended_model >= MSE_Mean_All.ARIMA_Model) {paste("ARIMA Model")}
 x5<-if(best_recommended_model >= MSE_Mean_All_NNAR) {paste("NNAR Model")}
 x6<-if(best_recommended_model >= MSE_Mean_All.VAR) {paste("VAR Model")}
+x7<-if(best_recommended_model >= MSE_Mean_All.VECM) {paste("VECM Model")}
 
 panderOptions('table.split.table', Inf)
 paste("Forecasting by using BATS Model  ==> ", y_lab, sep=" ")
@@ -418,10 +448,12 @@ paste("Forecasting by using ARIMA Model  ==> ", y_lab, sep=" ")
 print(ascii(data.frame(FD,forecasting_date=forecasting_data_by_name, forecasting_by_auto.arima=tail(forecasting_auto_arima$mean, N_forecasting_days), Lower=tail(forecasting_auto_arima$lower, N_forecasting_days), Upper=tail(forecasting_auto_arima$upper, N_forecasting_days))), type = "rest")
 paste("Forecasting by using VAR Model  ==> ", y_lab, sep=" ")
 print(ascii(data.frame(FD,forecasting_date=forecasting_data_by_name, forecasting_by_VAR=tail(forecasting_VAR$mean, N_forecasting_days), Lower=tail(forecasting_VAR$lower, N_forecasting_days), Upper=tail(forecasting_VAR$upper, N_forecasting_days))), type = "rest")
+paste("Forecasting by using VECM Model  ==> ", y_lab, sep=" ")
+print(ascii(data.frame(FD,forecasting_date=forecasting_data_by_name, forecasting_by_VECM=tail(forecasting_VECM$mean, N_forecasting_days), Lower=tail(forecasting_VECM$lower, N_forecasting_days), Upper=tail(forecasting_VECM$upper, N_forecasting_days))), type = "rest")
 
 paste("Forecasting by using NNAR Model  ==> ", y_lab, sep=" ")
 print(ascii(data.frame(FD,forecasting_date=forecasting_data_by_name, forecasting_by_NNAR=tail(forecasting_NNAR$mean, N_forecasting_days))), type = "rest")
-result<-c(x1, x2, x3, x4, x5, x6)
+result<-c(x1, x2, x3, x4, x5, x6, x7)
 table.error<-data.frame(country.name, NNAR.model=MSE_Mean_All_NNAR, BATS.Model=MSE_Mean_All.bats_Model, TBATS.Model=MSE_Mean_All.TBATS_Model, Holt.Model=MSE_Mean_All.Holt_Model, ARIMA.Model=MSE_Mean_All.ARIMA_Model, VAR.Model=MSE_Mean_All.VAR,   Best.Model=result)
 
 print(ascii(table(table.error)), type = "rest")
