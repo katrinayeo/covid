@@ -1,6 +1,6 @@
 # Adapted and modified from Epidemic.TA in 
 # System for Forecasting COVID-19 Cases Using Time-Series and Neural Networks Models 
-
+install.packages("vars")
 library(fpp2)
 library(ggplot2)
 library("readxl")
@@ -14,6 +14,8 @@ require(data.table)
 library(Hmisc)
 library(ascii)
 library(pander)
+library(urca)
+library(vars)
 
 ##Global variable##
 all_countries_covid_data <- read_excel("formated_data.xlsx", sheet = "Daily New Cases")
@@ -316,6 +318,39 @@ graph4
 MSE_Mean_All.ARIMA
 
 #VAR model
+DNC <- read_excel("formated_data.xlsx", sheet = "Daily New Cases")
+SGDNC<-DNC$Singapore[1:517]
+UKDNC<-DNC$`United Kingdom`[1:517]
+USDNC<-DNC$`United States`[1:517]
+
+#Loading Monthly Unemployment Rate Data
+MUR <- read_excel("formated_data.xlsx", sheet = "Monthly Unemployment Rate")
+SGMUR<-MUR$Singapore
+UKMUR<-MUR$`United Kingdom`
+USMUR<-MUR$`United States`
+
+#Loading Government Response Index Data
+GRI <- read_excel("formated_data.xlsx", sheet = "Government Response Index")
+SGGRI<-GRI$Singapore
+UKGRI<-GRI$`United Kingdom`
+USGRI<-GRI$`United States`
+
+#Loading Containment Health Index Data
+CHI <- read_excel("formated_data.xlsx", sheet = "Containment Health Index")
+SGCHI<-CHI$Singapore
+UKCHI<-CHI$`United Kingdom`
+USCHI<-CHI$`United States`
+
+#Loading Economic Support Index Data
+ESI <- read_excel("formated_data.xlsx", sheet = "Economic Support Index")
+SGESI<-ESI$Singapore
+UKESI<-ESI$`United Kingdom`
+USESI<-ESI$`United States`
+
+SGdata = cbind(SGDNC, SGGRI, SGCHI, SGESI)
+diff_SGdata = diff(SGdata)
+dim(diff_SGdata)
+
 #processing on data (input data)
 rows <- NROW(diff_SGdata) # calculate number of rows in time series (number of days)
 
@@ -352,6 +387,14 @@ MSE_Mean_All.VAR
 
 colMeans(training_data) 
 sqrt(apply(training_data,2,var))
+
+#VECM Model
+SGdata = cbind(SGDNC, SGGRI, SGCHI, SGESI)
+SGData.VAR.IC <- VARselect(SGData, type= const)
+
+
+
+
 
 # Summary Table for MSE for all models
 best_recommended_model <- min(MSE_Mean_All_NNAR, MSE_Mean_All.bats_Model, MSE_Mean_All.TBATS_Model, MSE_Mean_All.Holt_Model, MSE_Mean_All.ARIMA_Model, MSE_Mean_All.VAR)
