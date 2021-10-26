@@ -93,3 +93,4 @@ lines(x1_test, col='red',lwd=2)
 
 colMeans(training_data) 
 sqrt(apply(training_data,2,var))
+
