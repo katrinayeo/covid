@@ -56,8 +56,7 @@ oct_forecast_input<-c(sep_forecast_input, sep_actual_data)
 forecast_input_list<-list(jun_forecast_input, jul_forecast_input, aug_forecast_input, sep_forecast_input)
 actual_data_list<-list(jun_actual_data, jul_actual_data, aug_actual_data, sep_actual_data)
 
-AD<-fulldate<-seq(as.Date(Actual_date_interval[1]), as.Date(Actual_date_interval[2]), frequency)  # Input range for actual date
-AD<-all_countries_covid_data$Date
+AD<-all_countries_covid_data$Date # Input range for actual date
 FD<-seq(as.Date(Forecast_date_interval[1]), as.Date(Forecast_date_interval[2]), frequency)  # Input range forecasting date
 N_forecasting_days<-nrow(data.frame(FD))  # Number of days to forecast
 validation_dates<-tail(AD, sep_data_days) # Number of validation dates
@@ -394,7 +393,6 @@ USESI<-ESI$`United States`
 
 
 # Data prep for VAR and VECM models
-# TODO: DAVID
 jun_actual_data<-original_data[518:547]
 jul_actual_data<-original_data[548:578]
 aug_actual_data<-original_data[579:609]
