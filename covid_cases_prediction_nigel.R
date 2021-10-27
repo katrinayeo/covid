@@ -369,36 +369,37 @@ USDNC<-DNC$`United States`[1:517]
 
 #Loading Monthly Unemployment Rate Data
 MUR <- read_excel("formated_data.xlsx", sheet = "Monthly Unemployment Rate")
-SGMUR<-MUR$Singapore
-UKMUR<-MUR$`United Kingdom`
-USMUR<-MUR$`United States`
+SGMUR<-MUR$Singapore[1:517]
+UKMUR<-MUR$`United Kingdom`[1:517]
+USMUR<-MUR$`United States`[1:517]
 
 #Loading Government Response Index Data
 GRI <- read_excel("formated_data.xlsx", sheet = "Government Response Index")
-SGGRI<-GRI$Singapore
-UKGRI<-GRI$`United Kingdom`
-USGRI<-GRI$`United States`
+SGGRI<-GRI$Singapore[1:517]
+UKGRI<-GRI$`United Kingdom`[1:517]
+USGRI<-GRI$`United States`[1:517]
 
 #Loading Containment Health Index Data
 CHI <- read_excel("formated_data.xlsx", sheet = "Containment Health Index")
-SGCHI<-CHI$Singapore
-UKCHI<-CHI$`United Kingdom`
-USCHI<-CHI$`United States`
+SGCHI<-CHI$Singapore[1:517]
+UKCHI<-CHI$`United Kingdom`[1:517]
+USCHI<-CHI$`United States`[1:517]
 
 #Loading Economic Support Index Data
 ESI <- read_excel("formated_data.xlsx", sheet = "Economic Support Index")
-SGESI<-ESI$Singapore
-UKESI<-ESI$`United Kingdom`
-USESI<-ESI$`United States`
+SGESI<-ESI$Singapore[1:517]
+UKESI<-ESI$`United Kingdom`[1:517]
+USESI<-ESI$`United States`[1:517]
 
 
 # Data prep for VAR and VECM models
-jun_actual_data<-original_data[518:547]
-jul_actual_data<-original_data[548:578]
-aug_actual_data<-original_data[579:609]
-sep_actual_data<-original_data[610:639]
+jun_actual_data<-cbind(DNC$Singapore[518:547], MUR$Singapore[518:547], GRI$Singapore[518:547], CHI$Singapore[518:547], ESI$Singapore[518:547])
+jul_actual_data<-cbind(DNC$Singapore[548:578], MUR$Singapore[548:578], GRI$Singapore[548:578], CHI$Singapore[548:578], ESI$Singapore[548:578])
+aug_actual_data<-cbind(DNC$Singapore[579:609], MUR$Singapore[579:609], GRI$Singapore[579:609], CHI$Singapore[579:609], ESI$Singapore[579:609])
+sep_actual_data<-cbind(DNC$Singapore[610:639], MUR$Singapore[610:639], GRI$Singapore[610:639], CHI$Singapore[610:639], ESI$Singapore[610:639])
 
-jun_forecast_input<-training_data
+
+jun_forecast_input<-cbind(DNC$Singapore[1:517], MUR$Singapore[1:517], GRI$Singapore[1:517], CHI$Singapore[1:517], ESI$Singapore[1:517])
 jul_forecast_input<-c(jun_forecast_input, jun_actual_data)
 aug_forecast_input<-c(jul_forecast_input, jul_actual_data)
 sep_forecast_input<-c(aug_forecast_input, aug_actual_data)
@@ -406,8 +407,6 @@ oct_forecast_input<-c(sep_forecast_input, sep_actual_data)
 
 forecast_input_list<-list(jun_forecast_input, jul_forecast_input, aug_forecast_input, sep_forecast_input)
 actual_data_list<-list(jun_actual_data, jul_actual_data, aug_actual_data, sep_actual_data)
-# END OF TODO
-
 
 
 SGdata = cbind(SGDNC, SGGRI, SGCHI, SGESI)
@@ -428,12 +427,13 @@ MTSdiag(m1,adj=12)
 
 validation_forecast<-VARpred(m1, validation_data_days)
 
-#TODO: DAVID
 sse_vec<-c()
 # Testing Data Evaluation
 for (i in 1:4){
   input_data<-forecast_input_list[i][[1]]
-  # temp_model<- #Reuse existing var model here
+  SGdata.VAR <- VARselect(SGdata) #determining number of lags to be included in VAR model
+  nlags <- SGdata.VAR$selection["SC(n)"]
+  temp_model<-VAR(input_data, 2) # temp_model<- #Reuse existing var model here
   actual_data<-actual_data_list[i][[1]]
   one_month_ahead_forecast <- predict(temp_model, h=NROW(actual_data))
   sse<-(actual_data-one_month_ahead_forecast$mean)^2
@@ -443,7 +443,7 @@ for (i in 1:4){
   sse_vec<-c(sse_vec, sse)
 }
 MSE_Per_Day<-round(mean(sse_vec), 3)
-#END OF TODO
+
 
 
 forecasting_VAR <- VARpred(m1, N_forecasting_days+validation_data_days)
@@ -484,6 +484,25 @@ summary(SGdata.CA)
 
 #Convert from VCEM to VAR model
 SGdata.VAR_convert <- vec2var(SGdata.CA, r=1)
+
+sse_vec<-c()
+# Testing Data Evaluation
+for (i in 1:4){
+  input_data<-forecast_input_list[i][[1]]
+  SGdata.VAR <- VARselect(SGdata) #determining number of lags to be included in VAR model
+  nlags <- SGdata.VAR$selection["SC(n)"]
+  SGdata.reuse <- ca.jo(SGdata, ecdet="const", type="trace", K=nlags, spec="transitory")
+  summary(SGdata.reuse)
+  temp_model<-vec2var(SGdata.reuse, r=1) # temp_model<- #Reuse existing vecm model here
+  actual_data<-actual_data_list[i][[1]]
+  one_month_ahead_forecast <- predict(temp_model, h=NROW(actual_data))
+  sse<-(actual_data-one_month_ahead_forecast$mean)^2
+  plot(c(input_data, one_month_ahead_forecast$mean),xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
+  x1_test <- ts(actual_data, start=NROW(input_data)+1 )
+  lines(x1_test, col='red',lwd=2)
+  sse_vec<-c(sse_vec, sse)
+}
+MSE_Per_Day<-round(mean(sse_vec), 3)
 
 #Forecasting
 validation_forecast<-predict(SGdata.VAR_convert, validation_data_days)
