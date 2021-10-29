@@ -351,7 +351,7 @@ print(paste('Global MSE: ', Glob_MSE))
 # Cross country single variate ARIMA
 # ==============
 
-training_data = cbind(UKMUR_Train, SGMUR_Train, USMUR_Train)
+training_data = cbind(diff(SGMUR_Train), diff(UKMUR_Train), diff(USMUR_Train))
 MTSplot(training_data)
 ccm(training_data)
 m1 <- VAR(training_data,1)
