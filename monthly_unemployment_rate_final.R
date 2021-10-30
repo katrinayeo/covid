@@ -119,7 +119,7 @@ plot(c(original_data, NNAR_forecast$mean), xlab = paste ("Time in", frequency ,y
 UKM6_M10 = append(forecast_vec, NNAR_forecast$mean[1])
 print('Forecast for SG from 2021M6 to 2021M10: ')
 print(UKM6_M10)
-# 4.624362 4.462292 4.368683 4.158946 4.099161
+# 4.624362 4.462292 4.368683 4.158946 4.099160
 
 
 #### Please clear Environment in between NNAR models#####
@@ -181,13 +181,14 @@ NNAR_forecast <- forecast(NNAR_forecast_model, h=N_forecasting_months)
 print(ascii(data.frame(FD, forecasting_by_NNAR=NNAR_forecast$mean)), type = "rest")
 plot(c(original_data, NNAR_forecast$mean), xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
 
-print(paste('SG MSE: ', SGMSE, 'UK MSE: ', UKMSE, 'US MSE: ', USMSE)) 
+print(paste('SG MSE: ', SGMSE, 'UK MSE: ', UKMSE, 'US MSE: ', USMSE))
+"SG MSE:  0.01474 UK MSE:  0.002 US MSE:  0.203"
 
 USM6_M10 = append(forecast_vec, NNAR_forecast$mean[1])
 print('Forecast for US from 2021M6 to 2021M10: ')
 print(USM6_M10)
-# 5.884604 5.964752 5.562955 5.401541 5.077669
+# 5.884568 5.964714 5.562925 5.401515 5.077651
 
 Global = (SGM6_M10 + UKM6_M10 + USM6_M10) / 3
 print(Global)
-# 4.440643 4.285596 4.148162 3.974270 3.740549
+# 4.409791 4.355963 4.164312 4.014077 3.859674
