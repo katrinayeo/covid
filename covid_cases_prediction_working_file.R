@@ -1,5 +1,6 @@
-# Adapted and modified from Epidemic.TA in 
-# System for Forecasting COVID-19 Cases Using Time-Series and Neural Networks Models 
+# Group name; Ace
+# Working file to test out different models (final submission is in covid_cases_prediction_final.R)
+
 library(fGarch)
 library(fpp2)
 library(ggplot2)
@@ -21,14 +22,14 @@ library("MTS")
 ##Global variable##
 set.seed(1)
 all_countries_covid_data <- read_excel("formated_data.xlsx", sheet = "Daily New Cases")
-original_data<-all_countries_covid_data$`Singapore`
+original_data<-all_countries_covid_data$`United States`
 
-y_lab <- "Daily Covid 19 Infection cases in Singapore"   # input name of data
+y_lab <- "Daily Covid 19 Infection cases in US"   # input name of data
 Actual_date_interval <- c("2020/01/01","2021/09/31")
 Forecast_date_interval <- c("2021/10/01","2021/10/31")
 
 frequency<-"days"
-country.name <- "Singapore"
+country.name <- "US"
 # Data Preparation & calculate some of statistics measures
 summary(original_data) # Summary your time series
 # calculate standard deviation 
@@ -51,11 +52,46 @@ forecasting_data_by_name<-weekdays(FD)  # Names of forecasting dates
 validation_data_days<-NROW(testing_data)
 
 
+calibrate_nnar=FALSE
+mse_vec<-c()
+if (calibrate_nnar){
+  for (i in 1:20)
+  {
+    #NNAR Model 
+    data_series<-ts(training_data)
+    Number_Neural<-i    # Number of Neural For model NNAR Model
+    model_NNAR<-nnetar(data_series, size=Number_Neural)
+    accuracy(model_NNAR)  # Accuracy on training data #Print Model Parameters
+    model_NNAR
+    
+    # Testing Data Evaluation
+    one_day_ahead_forecast <- forecast(model_NNAR, h=1)
+    se_1<-(testing_data[1]-one_day_ahead_forecast$mean)^2
+    se_vec<-c(se_1)
+    forecast_vec = c(one_day_ahead_forecast$mean)
+    for (i in 1:(NROW(testing_data)-1)){
+      input_data<-c(training_data, testing_data[1:i])
+      temp_model<-nnetar(input_data, model=model_NNAR)
+      actual_data<-testing_data[i+1]
+      one_day_ahead_forecast <- forecast(temp_model, h=1)
+      forecast_vec<-c(forecast_vec, one_day_ahead_forecast$mean)
+      se<-(actual_data-one_day_ahead_forecast$mean)^2
+      se_vec<-c(se_vec, se)
+    }
+    
+    MSE_Per_Day<-round(mean(se_vec), 3)
+    mse_vec<-c(mse_vec, MSE_Per_Day)
+  }
+  mse_vec
+  min(mse_vec)
+}
+
+
 
 #NNAR Model 
 data_series<-ts(training_data)
-#Number_Neural<-3    # Number of Neural For model NNAR Model
-model_NNAR<-nnetar(data_series)
+Number_Neural<-1   # Number of Neural For model NNAR Model
+model_NNAR<-nnetar(data_series, size=Number_Neural)
 accuracy(model_NNAR)  # Accuracy on training data #Print Model Parameters
 model_NNAR
 
@@ -75,7 +111,7 @@ for (i in 1:(NROW(testing_data)-1)){
 }
 plot(c(training_data, forecast_vec),xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
 x1_test <- ts(testing_data, start=NROW(training_data)+1 )
-lines(x1_test, col='red',lwd=2)
+lines(x1_test, col='red',lwd=1)
 
 MSE_Per_Day<-round(mean(se_vec), 3)
 paste ("MSE % For ",validation_data_days,frequency,"by using NNAR Model for  ==> ",y_lab, sep=" ")
@@ -93,6 +129,8 @@ NNAR_forecast_model<-nnetar(original_data, model=model_NNAR)
 NNAR_forecast <- forecast(NNAR_forecast_model, h=N_forecasting_days)
 print(ascii(data.frame(FD,forecating_date=forecasting_data_by_name, forecasting_by_NNAR=NNAR_forecast$mean)), type = "rest")
 plot(c(original_data, NNAR_forecast$mean), xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
+oct_forecast <- ts(NNAR_forecast$mean, start=NROW(original_data)+1 )
+lines(oct_forecast, col='red',lwd=1)
 MSE_Mean_All_NNAR
 
 
@@ -102,7 +140,7 @@ MSE_Mean_All_NNAR
 # Data Modeling
 data_series<-ts(training_data) # make your data to time series
 autoplot(data_series ,xlab=paste ("Time in", frequency, sep=" "), ylab = y_lab, main=paste ("Actual Data :", y_lab, sep=" "))
-model_bats<-bats(data_series)
+model_bats<-bats(data_series, use.arma.errors=TRUE)
 accuracy(model_bats)  # accuracy on training data
 # Print Model Parameters
 model_bats
@@ -116,7 +154,7 @@ se_vec<-c(se_1)
 forecast_vec = c(one_day_ahead_forecast$mean)
 for (i in 1:(NROW(testing_data)-1)){
   input_data<-c(training_data, testing_data[1:i])
-  temp_model<-bats(input_data, model=model_bats)
+  temp_model<-bats(input_data, model=model_bats, use.arma.errors=TRUE)
   actual_data<-testing_data[i+1]
   one_day_ahead_forecast <- predict(temp_model, h=1)
   forecast_vec<-c(forecast_vec, one_day_ahead_forecast$mean)
@@ -136,10 +174,12 @@ paste (" MSE that's Error of Forecasting for ", validation_data_days, " days in 
 paste(MSE_Mean_All.bats)
 paste ("MSE that's Error of Forecasting day by day for ", validation_data_days, " days in bats Model for  ==> ", y_lab, sep=" ")
 
-BATS_forecast_model<-bats(original_data, model=model_bats)
+BATS_forecast_model<-bats(original_data, model=model_bats, use.arma.errors=TRUE)
 BATS_forecast <- forecast(BATS_forecast_model, h=N_forecasting_days)
 print(ascii(data.frame(FD,forecating_date=forecasting_data_by_name,forecasting_by_NNAR=BATS_forecast$mean)), type = "rest")
 plot(c(original_data, BATS_forecast$mean),xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
+oct_forecast <- ts(BATS_forecast$mean, start=NROW(original_data)+1 )
+lines(oct_forecast, col='red',lwd=2)
 MSE_Mean_All.bats
 
 
@@ -148,7 +188,7 @@ MSE_Mean_All.bats
 # TBATS Model (Trigonometric Seasonal, Box-Cox Transformation, ARMA residuals, Trend and Seasonality)
 # Data Modeling
 data_series<-ts(training_data)
-model_TBATS<-tbats(data_series, use.box.cox=FALSE, seasonal.periods=c(1), use.damped.trend=FALSE)
+model_TBATS<-tbats(data_series, use.box.cox=FALSE, use.arma.errors=TRUE)
 accuracy(model_TBATS)  # accuracy on training data
 # Print Model Parameters
 model_TBATS
@@ -161,7 +201,7 @@ se_vec<-c(se_1)
 forecast_vec = c(one_day_ahead_forecast$mean)
 for (i in 1:(NROW(testing_data)-1)){
   input_data<-c(training_data, testing_data[1:i])
-  temp_model<-tbats(input_data, model=model_TBATS)
+  temp_model<-tbats(input_data, model=model_TBATS, use.arma.errors=TRUE)
   actual_data<-testing_data[i+1]
   one_day_ahead_forecast <- predict(temp_model, h=1)
   forecast_vec<-c(forecast_vec, one_day_ahead_forecast$mean)
@@ -181,10 +221,12 @@ paste (" MSE that's Error of Forecasting for ", validation_data_days, " days in 
 paste(MSE_Mean_All.TBATS, "%")
 paste ("MSE that's Error of Forecasting day by day for ", validation_data_days, " days in TBATS Model for  ==> ", y_lab, sep=" ")
 
-TBATS_forecast_model<-tbats(original_data, model=model_TBATS)
+TBATS_forecast_model<-tbats(original_data, model=model_TBATS, use.arma.errors=TRUE)
 TBATS_forecast <- forecast(TBATS_forecast_model, h=N_forecasting_days)
 print(ascii(data.frame(FD, forecating_date=forecasting_data_by_name, forecasting_by_TBATS=TBATS_forecast$mean, Lower=TBATS_forecast$lower, Upper=TBATS_forecast$upper)), type = "rest")
 plot(c(original_data, TBATS_forecast$mean),xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
+oct_forecast <- ts(TBATS_forecast$mean, start=NROW(original_data)+1 )
+lines(oct_forecast, col='red',lwd=2)
 MSE_Mean_All.TBATS
 
 
@@ -314,36 +356,6 @@ MSE_Mean_All.ARIMA
 
 
 
-# GARCH
-data_series<-ts(training_data)
-auto.arima(data_series, approximation=FALSE, trace=T)
-data_series_diff<-diff(data_series)
-garch_model<-garchFit(formula= ~arma(3,0) + garch(1, 1), data_series_diff)
-summary(garch_model)
-res = residuals(garch_model)
-res_std = res / garch_model@sigma.t
-Box.test(res_std^2, lag=10, type="Ljung-Box")
-acf(res_std^2)
-# Testing Data Evaluation
-one_day_ahead_forecast_diff <- predict(garch_model, 1)
-one_day_ahead_forecast<-tail(training_data, n=1) + one_day_ahead_forecast_diff$meanForecast
-se_1<-(testing_data[1]-one_day_ahead_forecast)^2
-se_vec<-c(se_1)
-forecast_vec = c(one_day_ahead_forecast$mean)
-for (i in 1:(NROW(testing_data)-1)){
-  input_data<-c(training_data, testing_data[1:i])
-  actual_data<-testing_data[i+1]
-  one_day_ahead_forecast <- predict(garch_model, input_data, h=1)
-  forecast_vec<-c(forecast_vec, one_day_ahead_forecast$mean)
-  se<-(actual_data-one_day_ahead_forecast$mean)^2
-  se_vec<-c(se_vec, se)
-}
-
-plot(c(training_data, forecast_vec),xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
-x1_test <- ts(testing_data, start=NROW(training_data)+1 )
-lines(x1_test, col='red',lwd=2)
-
-
 # Summary Table for MSE for all models
 best_recommended_model <- min(MSE_Mean_All_NNAR, MSE_Mean_All.bats_Model, MSE_Mean_All.TBATS_Model, MSE_Mean_All.Holt_Model, MSE_Mean_All.ARIMA_Model)
 paste("Choosing the best model based on MSE of forecasts by using NNAR, BATS, TBATS, Holt's Linear Model, ARIMA", y_lab, sep=" ")
@@ -369,140 +381,3 @@ result<-c(x1, x2, x3, x4, x5)
 table.error<-data.frame(country.name, NNAR.model=MSE_Mean_All_NNAR, BATS.Model=MSE_Mean_All.bats_Model, TBATS.Model=MSE_Mean_All.TBATS_Model, Holt.Model=MSE_Mean_All.Holt_Model, ARIMA.Model=MSE_Mean_All.ARIMA_Model, Best.Model=result)
 
 print(ascii(table.error), type = "rest")
-
-
-
-#
-#==========================================================
-#
-
-#VAR model
-DNC <- read_excel("formated_data.xlsx", sheet = "Daily New Cases")
-SGDNC<-DNC$Singapore[1:517]
-UKDNC<-DNC$`United Kingdom`[1:517]
-USDNC<-DNC$`United States`[1:517]
-
-#Loading Monthly Unemployment Rate Data
-MUR <- read_excel("formated_data.xlsx", sheet = "Monthly Unemployment Rate")
-SGMUR<-MUR$Singapore[1:517]
-UKMUR<-MUR$`United Kingdom`[1:517]
-USMUR<-MUR$`United States`[1:517]
-
-#Loading Government Response Index Data
-GRI <- read_excel("formated_data.xlsx", sheet = "Government Response Index")
-SGGRI<-GRI$Singapore[1:517]
-UKGRI<-GRI$`United Kingdom`[1:517]
-USGRI<-GRI$`United States`[1:517]
-
-#Loading Containment Health Index Data
-CHI <- read_excel("formated_data.xlsx", sheet = "Containment Health Index")
-SGCHI<-CHI$Singapore[1:517]
-UKCHI<-CHI$`United Kingdom`[1:517]
-USCHI<-CHI$`United States`[1:517]
-
-#Loading Economic Support Index Data
-ESI <- read_excel("formated_data.xlsx", sheet = "Economic Support Index")
-SGESI<-ESI$Singapore[1:517]
-UKESI<-ESI$`United Kingdom`[1:517]
-USESI<-ESI$`United States`[1:517]
-
-
-SGdata = cbind(SGDNC, SGGRI, SGCHI, SGESI)
-diff_SGdata = diff(SGdata)
-dim(diff_SGdata)
-
-#processing on data (input data)
-rows <- NROW(diff_SGdata) # calculate number of rows in time series (number of days)
-training_data<-diff_SGdata
-MTSplot(training_data)
-ccm(training_data)
-m0=VARorder(training_data)
-m0$Mstat
-names(m0)
-m1=VAR(training_data, 8)
-m2=refVAR(m1,thres=1.96)
-MTSdiag(m1,adj=12)
-
-validation_forecast<-VARpred(m1, NROW(testing_data))
-se_vec<-(testing_data-validation_forecast$pred)^2
-
-MSE_Per_Day<-round(mean(se_vec), 3)
-forecasting_VAR <- VARpred(m1, N_forecasting_days+validation_data_days)
-MSE_Per_Day<-round((testing_data[, 1]-validation_forecast$pred[, 1])^2, 3)
-paste ("MSE for ",validation_data_days,frequency,"by using VAR Model for  ==> ",y_lab, sep=" ")
-MSE_Mean_All.VAR<-paste(round(mean(MSE_Per_Day),3)," MSE ",validation_data_days,frequency,y_lab,sep=" ")
-MSE_Mean_All.VAR<-round(mean(MSE_Per_Day),3)
-MSE_VAR<-paste(round(MSE_Per_Day,3))
-MSE_VAR_Model<-paste(MSE_Per_Day )
-paste ("MSE Error of Forecasting for ",validation_data_days," days in VAR Model for  ==> ",y_lab, sep=" ")
-paste(MSE_Mean_All,"%")
-paste ("MSE Error of Forecasting day by day for ",validation_data_days," days in VAR Model for  ==> ",y_lab, sep=" ")
-
-print(ascii(data.frame(date_VAR=validation_dates,validation_data_by_name,actual_data=testing_data[, 1],forecasting_VAR=validation_forecast$pred[, 1], MSE_VAR_Model)), type = "rest")
-print(ascii(data.frame(FD, forecating_date=forecasting_data_by_name, forecasting_by_VAR=tail(forecasting_VAR$pred[, 1], N_forecasting_days))), type = "rest")
-plot(forecasting_VAR$pred[,1],xlab = paste ("Time in", frequency, y_lab, sep=" "), ylab=y_lab)
-x1_test <- ts(testing_data, start = testing_data_start_index )
-lines(x1_test, col='red',lwd=1)
-graph5<-autoplot(forecasting_VAR, xlab = paste ("Time in", frequency, y_lab, sep=" "), ylab=y_lab)
-graph5
-MSE_Mean_All.VAR
-
-
-colMeans(training_data) 
-sqrt(apply(training_data,2,var))
-
-#VECM Model
-SGdata = cbind(SGDNC, SGGRI, SGCHI, SGESI)
-SGdata.VAR <- VARselect(SGdata) #determining number of lags to be included in cointegration test and VCEM model
-nlags <- SGdata.VAR$selection["SC(n)"]
-nlags
-
-#Perform cointegration test
-SGdata.CA <- ca.jo(SGdata, ecdet="const", type="trace", K=nlags, spec="transitory")
-summary(SGdata.CA)
-
-
-
-#Convert from VCEM to VAR model
-SGdata.VAR_convert <- vec2var(SGdata.CA, r=1)
-
-sse_vec<-c()
-# Testing Data Evaluation
-for (i in 1:4){
-  input_data<-forecast_input_list[i][[1]]
-  SGdata.VAR <- VARselect(SGdata) #determining number of lags to be included in VAR model
-  nlags <- SGdata.VAR$selection["SC(n)"]
-  SGdata.reuse <- ca.jo(SGdata, ecdet="const", type="trace", K=nlags, spec="transitory")
-  summary(SGdata.reuse)
-  temp_model<-vec2var(SGdata.reuse, r=1) # temp_model<- #Reuse existing vecm model here
-  actual_data<-actual_data_list[i][[1]]
-  one_month_ahead_forecast <- predict(temp_model, h=NROW(actual_data))
-  sse<-(actual_data-one_month_ahead_forecast$mean)^2
-  plot(c(input_data, one_month_ahead_forecast$mean),xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
-  x1_test <- ts(actual_data, start=NROW(input_data)+1 )
-  lines(x1_test, col='red',lwd=2)
-  sse_vec<-c(sse_vec, sse)
-}
-MSE_Per_Day<-round(mean(sse_vec), 3)
-
-#Forecasting
-validation_forecast<-predict(SGdata.VAR_convert, validation_data_days)
-forecasting_VECM <- predict(SGdata.VAR_convert, N_forecasting_days+validation_data_days)
-MSE_Per_Day<-round((testing_data[, 1]-validation_forecast$pred[, 1])^2, 3)
-paste ("MSE for ",validation_data_days,frequency,"by using VECM Model for  ==> ",y_lab, sep=" ")
-MSE_Mean_All.VECM<-paste(round(mean(MSE_Per_Day),3)," MSE ",validation_data_days,frequency,y_lab,sep=" ")
-MSE_Mean_All.VECM<-round(mean(MSE_Per_Day),3)
-MSE_VECM<-paste(round(MSE_Per_Day,3))
-MSE_VECM_Model<-paste(MSE_Per_Day )
-paste ("MSE Error of Forecasting for ",validation_data_days," days in VECM Model for  ==> ",y_lab, sep=" ")
-paste(MSE_Mean_All,"%")
-paste ("MSE Error of Forecasting day by day for ",validation_data_days," days in VECM Model for  ==> ",y_lab, sep=" ")
-
-print(ascii(data.frame(date_VAR=validation_dates,validation_data_by_name,actual_data=testing_data[, 1],forecasting_VAR=validation_forecast$pred[, 1], MSE_VAR_Model)), type = "rest")
-print(ascii(data.frame(FD, forecating_date=forecasting_data_by_name, forecasting_by_VAR=tail(forecasting_VAR$pred[, 1], N_forecasting_days))), type = "rest")
-plot(forecasting_VECM$pred[,1],xlab = paste ("Time in", frequency, y_lab, sep=" "), ylab=y_lab)
-x1_test <- ts(testing_data, start = testing_data_start_index )
-lines(x1_test, col='red',lwd=1)
-graph6<-autoplot(forecasting_VECM, xlab = paste ("Time in", frequency, y_lab, sep=" "), ylab=y_lab)
-graph6
-MSE_Mean_All.VECM
