@@ -28,8 +28,8 @@ UKMUR_Train<-read_excel("formated_data.xlsx", sheet = "MUR UK Train")$MUR
 USMUR_Train<-read_excel("formated_data.xlsx", sheet = "MUR US Train")$MUR
 
 SGMUR_Validate <- read_excel("formated_data.xlsx", sheet = "MUR Validate")$`Singapore`
-USMUR_Validate <- read_excel("formated_data.xlsx", sheet = "MUR Validate")$`United Kingdom`
-UKMUR_Validate <- read_excel("formated_data.xlsx", sheet = "MUR Validate")$`United States`
+UKMUR_Validate <- read_excel("formated_data.xlsx", sheet = "MUR Validate")$`United Kingdom`
+USMUR_Validate <- read_excel("formated_data.xlsx", sheet = "MUR Validate")$`United States`
 
 #Loading Government Response Index Data
 GRI <- read_excel("formated_data.xlsx", sheet = "GRI Monthly")
@@ -118,7 +118,7 @@ frequency<-"months"
 plot(forecast_raw_US,xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab)
 
 print(paste('SG MSE: ', SGMSE, 'UK MSE: ', UKMSE, 'US MSE: ', USMSE)) 
-# "SG MSE:  0.01474 UK MSE:  0.60953 US MSE:  1.985"
+# "SG MSE:  0.01474 UK MSE:  0.06413 US MSE:  0.3825"
 
 ## GLOBAL
 

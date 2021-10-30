@@ -183,6 +183,7 @@ print(ascii(data.frame(FD, forecasting_by_NNAR=NNAR_forecast$mean)), type = "res
 plot(c(original_data, NNAR_forecast$mean), xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
 
 print(paste('SG MSE: ', SGMSE, 'UK MSE: ', UKMSE, 'US MSE: ', USMSE)) 
+"SG MSE:  0.01474 UK MSE:  0.002 US MSE:  0.203"
 
 USM6_M10 = append(forecast_vec, NNAR_forecast$mean[1])
 print('Forecast for SG from 2021M6 to 2021M10: ')
