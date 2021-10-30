@@ -563,3 +563,43 @@ print(ascii(data.frame(FD, forecasting_by_NNAR=NNAR_forecast$mean)), type = "res
 plot(c(original_data, NNAR_forecast$mean), xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
 
 print(paste('SG MSE: ', SGMSE, 'UK MSE: ', UKMSE, 'US MSE: ', USMSE)) 
+
+
+## plotting
+
+plot(NULL, xlim=c(1,23), ylim=c(2,3.6), xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab)
+title("Forecast from ARIMA(0,2,1)")
+forecast_vec=c(5.981794, 5.063991, 4.986674, 4.502931)
+lines(x = c(1:17), y=c(SGMUR_Train))
+points(x=c(18:22), y=c(SGM6_M10), col='blue')
+lines(x=c(17:22), y=append(c(SGMUR_Train[17]),c(SGM6_M10)), col='blue')
+points(x=c(18:21), y=c(SGMUR_Validate), col='red')
+lines(x=c(17:21), y=append(c(SGMUR_Train[17]),c(SGMUR_Validate)), col='red')
+legend(1, 3.5, legend=c("Validate", "Fitted"),
+       col=c("red", "blue"), lty=c(1,1), cex=0.8)
+
+
+plot(NULL, xlim=c(1,55), ylim=c(3,6), xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab)
+title("Forecast from NNAR(3,2)")
+forecast_vec=c(4.619692, 5.151913, 4.896484, 4.938110, 4.462851)
+lines(x = c(1:49), y=c(UKMUR_Train))
+points(x=c(50:54), y=c(forecast_vec), col='blue')
+lines(x=c(49:54), y=append(c(UKMUR_Train[49]),c(forecast_vec)), col='blue')
+points(x=c(50:53), y=c(UKMUR_Validate), col='red')
+lines(x=c(49:53), y=append(c(UKMUR_Train[49]),c(UKMUR_Validate)), col='red')
+legend(1, 6, legend=c("Validate", "Fitted"),
+       col=c("red", "blue"), lty=c(1,1), cex=0.8)
+
+plot(NULL, xlim=c(1,55), ylim=c(3,15), xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab)
+title("Forecast from NNAR(1,1)")
+forecast_vec=c(5.981794, 5.063991, 4.986674, 4.502931, 4.356585)
+lines(x = c(1:49), y=c(USMUR_Train))
+points(x=c(50:54), y=c(forecast_vec), col='blue')
+lines(x=c(49:54), y=append(c(USMUR_Train[49]),c(forecast_vec)), col='blue')
+points(x=c(50:53), y=c(USMUR_Validate), col='red')
+lines(x=c(49:53), y=append(c(USMUR_Train[49]),c(USMUR_Validate)), col='red')
+legend(1, 14, legend=c("Validate", "Fitted"),
+       col=c("red", "blue"), lty=c(1,1), cex=0.8)
+
+
+
