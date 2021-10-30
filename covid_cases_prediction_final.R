@@ -44,6 +44,9 @@ summary(original_data) # Summary your time series
 data.frame(kurtosis=kurtosis(original_data))   # calculate Cofficient of kurtosis
 data.frame(skewness=skewness(original_data))  # calculate Cofficient of skewness
 data.frame(Standard.deviation=sd(original_data))
+acf(original_data)
+pacf(original_data)
+kpss.test(original_data)
 
 #processing on data (input data)
 rows <- NROW(original_data) # calculate number of rows in time series (number of days)
@@ -118,6 +121,9 @@ summary(original_data)
 data.frame(kurtosis=kurtosis(original_data))  
 data.frame(skewness=skewness(original_data))  
 data.frame(Standard.deviation=sd(original_data))
+acf(original_data)
+pacf(original_data)
+kpss.test(original_data)
 
 #processing on data (input data)
 rows <- NROW(original_data) # calculate number of rows in time series (number of days)
@@ -194,6 +200,9 @@ summary(original_data) # Summary your time series
 data.frame(kurtosis=kurtosis(original_data))   # calculate Cofficient of kurtosis
 data.frame(skewness=skewness(original_data))  # calculate Cofficient of skewness
 data.frame(Standard.deviation=sd(original_data))
+acf(original_data)
+pacf(original_data)
+kpss.test(original_data)
 
 #processing on data (input data)
 rows <- NROW(original_data) # calculate number of rows in time series (number of days)
