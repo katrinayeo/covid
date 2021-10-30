@@ -118,7 +118,7 @@ frequency<-"months"
 plot(forecast_raw_US,xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab)
 
 print(paste('SG MSE: ', SGMSE, 'UK MSE: ', UKMSE, 'US MSE: ', USMSE)) 
-# "SG MSE:  0.01474 UK MSE:  6.905 US MSE:  2.14462"
+# "SG MSE:  0.01474 UK MSE:  0.60953 US MSE:  1.985"
 
 ## GLOBAL
 
@@ -403,6 +403,7 @@ y_lab <- "Monthly Unemployment rate in SG"   # input name of data
 training_data<-SGMUR_Train
 testing_data_start_index = 18
 testing_data<-SGMUR_Validate
+original_data <- append(training_data, testing_data)
 
 AD<-read_excel("formated_data.xlsx", sheet = "MUR SG Train")$Date
 append(AD, read_excel("formated_data.xlsx", sheet = "MUR Validate")$Date)
@@ -443,17 +444,19 @@ paste ("MSE % For",no_validation_data_months,frequency,"by using NNAR Model for 
 MSE_Mean_All<-paste(MSE_Per_Day," MSE ",no_validation_data_months,frequency,y_lab,sep=" ")
 paste ("MSE that's Error of Forecasting for ",no_validation_data_months," months in NNAR Model for  ==> ",y_lab, sep=" ")
 paste(MSE_Mean_All)
+SGMSE <- MSE_Per_Day
 
-# NNAR_forecast_model<-nnetar(original_data, model=model_NNAR)
-# NNAR_forecast <- forecast(NNAR_forecast_model, h=N_forecasting_months)
-# print(ascii(data.frame(FD, forecasting_by_NNAR=NNAR_forecast$mean)), type = "rest")
-# plot(c(original_data, NNAR_forecast$mean), xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
+NNAR_forecast_model<-nnetar(original_data, model=model_NNAR)
+NNAR_forecast <- forecast(NNAR_forecast_model, h=N_forecasting_months)
+print(ascii(data.frame(FD, forecasting_by_NNAR=NNAR_forecast$mean)), type = "rest")
+plot(c(original_data, NNAR_forecast$mean), xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
 
 ####NNAR model for UK####
 y_lab <- "Monthly Unemployment rate in UK"   # input name of data
 training_data<-UKMUR_Train
 testing_data_start_index = 50
 testing_data<-UKMUR_Validate
+original_data <- append(training_data, testing_data)
 
 AD<-read_excel("formated_data.xlsx", sheet = "MUR UK Train")$Date
 append(AD, read_excel("formated_data.xlsx", sheet = "MUR Validate")$Date)
@@ -496,22 +499,23 @@ paste ("MSE % For",no_validation_data_months,frequency,"by using NNAR Model for 
 MSE_Mean_All<-paste(MSE_Per_Day," MSE ",no_validation_data_months,frequency,y_lab,sep=" ")
 paste ("MSE that's Error of Forecasting for ",no_validation_data_months," months in NNAR Model for  ==> ",y_lab, sep=" ")
 paste(MSE_Mean_All)
+UKMSE <- MSE_Per_Day
 
-# NNAR_forecast_model<-nnetar(original_data, model=model_NNAR)
-# NNAR_forecast <- forecast(NNAR_forecast_model, h=N_forecasting_months)
-# print(ascii(data.frame(FD, forecasting_by_NNAR=NNAR_forecast$mean)), type = "rest")
-# plot(c(original_data, NNAR_forecast$mean), xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
+NNAR_forecast_model<-nnetar(original_data, model=model_NNAR)
+NNAR_forecast <- forecast(NNAR_forecast_model, h=N_forecasting_months)
+print(ascii(data.frame(FD, forecasting_by_NNAR=NNAR_forecast$mean)), type = "rest")
+plot(c(original_data, NNAR_forecast$mean), xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
 
 
 ####NNAR model for US####
-original_data=USMUR
 y_lab <- "Monthly Unemployment rate in US"   # input name of data
-rows <- NROW(original_data) # calculate number of rows in time series (number of days)
 training_data<-USMUR_Train
 testing_data_start_index = 50
 testing_data<-original_data[testing_data_start_index:53] #testing data
+original_data <- append(training_data, testing_data)
 
-AD<-MUR$Date # Input range for actual date
+AD<-read_excel("formated_data.xlsx", sheet = "MUR US Train")$Date
+append(AD, read_excel("formated_data.xlsx", sheet = "MUR Validate")$Date)
 Forecast_date_interval <- c("2021/10/01","2021/10/31")
 frequency<-"months"
 FD<-seq(as.Date(Forecast_date_interval[1]), as.Date(Forecast_date_interval[2]), frequency)  # Input range forecasting date
@@ -551,10 +555,11 @@ paste ("MSE % For",no_validation_data_months,frequency,"by using NNAR Model for 
 MSE_Mean_All<-paste(MSE_Per_Day," MSE ",no_validation_data_months,frequency,y_lab,sep=" ")
 paste ("MSE that's Error of Forecasting for ",no_validation_data_months," months in NNAR Model for  ==> ",y_lab, sep=" ")
 paste(MSE_Mean_All)
+USMSE <- MSE_Per_Day
 
-# NNAR_forecast_model<-nnetar(original_data, model=model_NNAR)
-# NNAR_forecast <- forecast(NNAR_forecast_model, h=N_forecasting_months)
-# print(ascii(data.frame(FD, forecasting_by_NNAR=NNAR_forecast$mean)), type = "rest")
-# plot(c(original_data, NNAR_forecast$mean), xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
+NNAR_forecast_model<-nnetar(original_data, model=model_NNAR)
+NNAR_forecast <- forecast(NNAR_forecast_model, h=N_forecasting_months)
+print(ascii(data.frame(FD, forecasting_by_NNAR=NNAR_forecast$mean)), type = "rest")
+plot(c(original_data, NNAR_forecast$mean), xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
 
-
+print(paste('SG MSE: ', SGMSE, 'UK MSE: ', UKMSE, 'US MSE: ', USMSE)) 
