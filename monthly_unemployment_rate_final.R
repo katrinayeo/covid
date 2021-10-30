@@ -66,12 +66,11 @@ print(SGM6_M10)
 ###############################################
 y_lab <- "Monthly Unemployment rate in UK"   # input name of data
 training_data<-UKMUR_Train
-testing_data_start_index = 50
 testing_data<-UKMUR_Validate
 original_data <- append(training_data, testing_data)
 
 AD<-read_excel("formated_data.xlsx", sheet = "MUR UK Train")$Date
-append(AD, read_excel("formated_data.xlsx", sheet = "MUR Validate")$Date)
+AD<-append(AD, read_excel("formated_data.xlsx", sheet = "MUR Validate")$Date)
 Forecast_date_interval <- c("2021/10/01","2021/10/31")
 frequency<-"months"
 FD<-seq(as.Date(Forecast_date_interval[1]), as.Date(Forecast_date_interval[2]), frequency)  # Input range forecasting date
@@ -81,7 +80,6 @@ no_validation_data_months<-NROW(testing_data)
 
 
 data_series<-ts(training_data)
-#Number_Neural<-1    # Number of Neural For model NNAR Model
 model_NNAR<-nnetar(data_series)
 accuracy(model_NNAR)  # Accuracy on training data #Print Model Parameters
 model_NNAR
@@ -90,8 +88,8 @@ model_NNAR
 one_month_ahead_forecast <- forecast(model_NNAR, h=1)
 one_month_ahead_forecast["fitted"]
 one_month_ahead_forecast["residuals"]
-se_1<-(testing_data[1]-one_month_ahead_forecast$mean)^2
-se_vec<-c(se_1)
+UK_se_1<-(testing_data[1]-one_month_ahead_forecast$mean)^2
+UK_se_vec<-c(UK_se_1)
 forecast_vec = c(one_month_ahead_forecast$mean)
 for (i in 1:(NROW(testing_data)-1)){
   input_data<-c(training_data, testing_data[1:i])
@@ -100,13 +98,13 @@ for (i in 1:(NROW(testing_data)-1)){
   one_month_ahead_forecast <- forecast(temp_model, h=1)
   forecast_vec<-c(forecast_vec, one_month_ahead_forecast$mean)
   se<-(actual_data-one_month_ahead_forecast$mean)^2
-  se_vec<-c(se_vec, se)
+  UK_se_vec<-c(UK_se_vec, se)
 }
 plot(c(training_data, forecast_vec),xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
 x1_test <- ts(testing_data, start=NROW(training_data)+1 )
 lines(x1_test, col='red',lwd=2)
 
-MSE_Per_Day<-round(mean(se_vec), 3)
+MSE_Per_Day<-round(mean(UK_se_vec), 3)
 paste ("MSE % For",no_validation_data_months,frequency,"by using NNAR Model for  ==> ",y_lab, sep=" ")
 MSE_Mean_All<-paste(MSE_Per_Day," MSE ",no_validation_data_months,frequency,y_lab,sep=" ")
 paste ("MSE that's Error of Forecasting for ",no_validation_data_months," months in NNAR Model for  ==> ",y_lab, sep=" ")
@@ -121,21 +119,22 @@ plot(c(original_data, NNAR_forecast$mean), xlab = paste ("Time in", frequency ,y
 UKM6_M10 = append(forecast_vec, NNAR_forecast$mean[1])
 print('Forecast for SG from 2021M6 to 2021M10: ')
 print(UKM6_M10)
-# 4.624362 4.462292 4.368683 4.158946 4.099160
+# 4.624362 4.462292 4.368683 4.158946 4.099161
 
+
+#### Please clear Environment in between NNAR models#####
 ###############################################
 # PREDICTION FOR US MONTHLY UNEMPLOYMENT RATE #
 ###############################################
 
 ####NNAR model for US####
 y_lab <- "Monthly Unemployment rate in US"   # input name of data
-rows <- NROW(original_data) # calculate number of rows in time series (number of days)
 training_data<-USMUR_Train # Training data
 testing_data<-USMUR_Validate #testing data
 original_data <- append(training_data, testing_data)
 
 AD<-read_excel("formated_data.xlsx", sheet = "MUR US Train")$Date
-append(AD, read_excel("formated_data.xlsx", sheet = "MUR Validate")$Date)
+AD<-append(AD, read_excel("formated_data.xlsx", sheet = "MUR Validate")$Date)
 Forecast_date_interval <- c("2021/10/01","2021/10/31")
 frequency<-"months"
 FD<-seq(as.Date(Forecast_date_interval[1]), as.Date(Forecast_date_interval[2]), frequency)  # Input range forecasting date
@@ -154,8 +153,8 @@ model_NNAR
 one_month_ahead_forecast <- forecast(model_NNAR, h=1)
 one_month_ahead_forecast["fitted"]
 one_month_ahead_forecast["residuals"]
-se_1<-(testing_data[1]-one_month_ahead_forecast$mean)^2
-se_vec<-c(se_1)
+US_se_1<-(testing_data[1]-one_month_ahead_forecast$mean)^2
+US_se_vec<-c(US_se_1)
 forecast_vec = c(one_month_ahead_forecast$mean)
 for (i in 1:(NROW(testing_data)-1)){
   input_data<-c(training_data, testing_data[1:i])
@@ -164,13 +163,13 @@ for (i in 1:(NROW(testing_data)-1)){
   one_month_ahead_forecast <- forecast(temp_model, h=1)
   forecast_vec<-c(forecast_vec, one_month_ahead_forecast$mean)
   se<-(actual_data-one_month_ahead_forecast$mean)^2
-  se_vec<-c(se_vec, se)
+  US_se_vec<-c(US_se_vec, se)
 }
 plot(c(training_data, forecast_vec),xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
 x1_test <- ts(testing_data, start=NROW(training_data)+1 )
 lines(x1_test, col='red',lwd=2)
 
-MSE_Per_Day<-round(mean(se_vec), 3)
+MSE_Per_Day<-round(mean(US_se_vec), 3)
 paste ("MSE % For",no_validation_data_months,frequency,"by using NNAR Model for  ==> ",y_lab, sep=" ")
 MSE_Mean_All<-paste(MSE_Per_Day," MSE ",no_validation_data_months,frequency,y_lab,sep=" ")
 paste ("MSE that's Error of Forecasting for ",no_validation_data_months," months in NNAR Model for  ==> ",y_lab, sep=" ")
@@ -183,13 +182,12 @@ print(ascii(data.frame(FD, forecasting_by_NNAR=NNAR_forecast$mean)), type = "res
 plot(c(original_data, NNAR_forecast$mean), xlab = paste ("Time in", frequency ,y_lab , sep=" "), ylab=y_lab, type='l')
 
 print(paste('SG MSE: ', SGMSE, 'UK MSE: ', UKMSE, 'US MSE: ', USMSE)) 
-"SG MSE:  0.01474 UK MSE:  0.002 US MSE:  0.203"
 
 USM6_M10 = append(forecast_vec, NNAR_forecast$mean[1])
-print('Forecast for SG from 2021M6 to 2021M10: ')
+print('Forecast for US from 2021M6 to 2021M10: ')
 print(USM6_M10)
-# 5.884568 5.964714 5.562925 5.401515 5.077651
+# 5.884604 5.964752 5.562955 5.401541 5.077669
 
 Global = (SGM6_M10 + UKM6_M10 + USM6_M10) / 3
 print(Global)
-# 4.409791 4.355963 4.164312 4.014077 3.859674
+# 4.440643 4.285596 4.148162 3.974270 3.740549
