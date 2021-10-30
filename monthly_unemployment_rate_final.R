@@ -32,8 +32,8 @@ UKMUR_Train<-read_excel("formated_data.xlsx", sheet = "MUR UK Train")$MUR
 USMUR_Train<-read_excel("formated_data.xlsx", sheet = "MUR US Train")$MUR
 
 SGMUR_Validate <- read_excel("formated_data.xlsx", sheet = "MUR Validate")$`Singapore`
-USMUR_Validate <- read_excel("formated_data.xlsx", sheet = "MUR Validate")$`United Kingdom`
-UKMUR_Validate <- read_excel("formated_data.xlsx", sheet = "MUR Validate")$`United States`
+UKMUR_Validate <- read_excel("formated_data.xlsx", sheet = "MUR Validate")$`United Kingdom`
+USMUR_Validate <- read_excel("formated_data.xlsx", sheet = "MUR Validate")$`United States`
 
 ###############################################
 # PREDICTION FOR SG MONTHLY UNEMPLOYMENT RATE #
@@ -121,7 +121,7 @@ plot(c(original_data, NNAR_forecast$mean), xlab = paste ("Time in", frequency ,y
 UKM6_M10 = append(forecast_vec, NNAR_forecast$mean[1])
 print('Forecast for SG from 2021M6 to 2021M10: ')
 print(UKM6_M10)
-# 4.619692 5.151913 4.896484 4.938110 4.462851
+# 4.624362 4.462292 4.368683 4.158946 4.099160
 
 ###############################################
 # PREDICTION FOR US MONTHLY UNEMPLOYMENT RATE #
@@ -187,8 +187,8 @@ print(paste('SG MSE: ', SGMSE, 'UK MSE: ', UKMSE, 'US MSE: ', USMSE))
 USM6_M10 = append(forecast_vec, NNAR_forecast$mean[1])
 print('Forecast for SG from 2021M6 to 2021M10: ')
 print(USM6_M10)
-# 5.981794 5.063991 4.986674 4.502931 4.356585
+# 5.884568 5.964714 5.562925 5.401515 5.077651
 
 Global = (SGM6_M10 + UKM6_M10 + USM6_M10) / 3
 print(Global)
-# 4.440643 4.285596 4.148162 3.974270 3.740549
+# 4.409791 4.355963 4.164312 4.014077 3.859674
